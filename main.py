@@ -1,16 +1,13 @@
 import pandas as pd
-from fuzzy_match import match_duck_db
+from fuzzy_match import fuzzy_match
 from time import time
 from tqdm import tqdm
+from join import vernaculars
+import os
 
-# Read csvs as dataframes
-emu = pd.read_csv('data/cdi-biology-650k.csv')
-vernaculars = pd.read_csv('data/vernaculars-cleaned.csv')
-
-# Clean
-emu.astype({'taxonIrn': 'Int64'})
-emu.fillna('', inplace=True)
-vernaculars.fillna('', inplace=True)
+# Read csv as dataframe
+emu_path = os.getenv('EMU_PATH')
+emu = pd.read_csv(emu_path)
 
 # Remove unneeded columns
 cols = [col for col in emu if col not in ['taxon', 'taxonIrn']]
@@ -21,19 +18,20 @@ joined = pd.merge(emu_dropped, vernaculars, left_on='taxon', right_on='canonical
 joined = joined.drop_duplicates(subset=['taxon'], keep='first')
 
 # Create dictionary and taxa list
+# vernaculars_taxa_joined = pd.merge(vernaculars, taxa, on='taxonID', how='left')
 vernacular_dict = joined.set_index('taxon').to_dict(orient="index")
 taxa = list(zip(emu['taxon'], emu['taxonRank'], emu['taxonIrn']))[999:1500]
 
 
 # Main logic for assigning vernacular name
-def get_vernacular(taxon:str, rank, irn):
+def get_vernacular(taxon: str, rank, irn):
     match = vernacular_dict.get(taxon)
 
     if match:
         return (match['vernacularName'], match['taxonID'], irn)
 
     else:
-        match = match_duck_db(taxon, rank)
+        match = fuzzy_match(vernaculars, taxon, rank)
         if match:
             vernacular_dict[taxon] = {
                 'taxonIrn': irn,

@@ -1,10 +1,7 @@
-import pandas as pd
 import duckdb
 
-df = pd.read_csv('data/vernaculars.csv')
 
-
-def match_duck_db(taxon:str, rank='species', threshold=0.95):
+def fuzzy_match(df, taxon:str, rank='species', threshold=0.95):
     if not taxon or not rank: return ('', '')
 
     rank = rank.lower()
@@ -49,8 +46,6 @@ def match_duck_db(taxon:str, rank='species', threshold=0.95):
 
     return match
 
-match = match_duck_db('Crotalus mitchelli')
-#print(match)
 
 
 
