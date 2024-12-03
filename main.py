@@ -67,6 +67,3 @@ emu.to_csv('data/emu-matched.csv')
 vernacular_dict_df = pd.DataFrame.from_dict(vernacular_dict, orient='index')
 vernacular_dict_df.fillna('', inplace=True)
 vernacular_dict_df.to_csv('data/vernacular_dict.csv')
-
-
-print(results)

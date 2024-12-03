@@ -1,3 +1,13 @@
+"""
+Reads Taxon.tsv from GBIF taxonomic backbone as a pandas DataFrame.
+
+Transforms dataset for fuzzy matching and merging with Vernaculars.tsv.
+
+Meant to import taxa, i.e.:
+    >>> from taxon import taxa
+"""
+
+
 import pandas as pd
 import os
 from dotenv import load_dotenv
