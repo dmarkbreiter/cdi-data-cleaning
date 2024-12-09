@@ -1,5 +1,6 @@
 import duckdb
 from typing import TypedDict
+import pandas as pd
 
 
 class Match(TypedDict):
@@ -32,52 +33,94 @@ def fuzzy_match(df, taxon: str, rank='species', threshold=0.95) -> Match | None:
 
     rank = rank.lower()
     taxon = taxon.replace("'", '').replace('"', '')
+    columns = """
+        taxonID, 
+        kingdom, 
+        phylum, 
+        class, 
+        "order", 
+        family, 
+        genus, 
+        specificEpithet, 
+        infraspecificEpithet, 
+        vernacularName, 
+        canonicalName
+    """
 
-    # Reassign rank to species if taxonRank is subspecies
+    if ' sp.' in taxon and rank == 'species':
+        rank = 'genus'
+        taxon = taxon.split(' ')[0]
+
     if rank == 'subspecies':
-        rank = 'species'
+        try:
+            genus = taxon.split(' ')[0]
+            species = taxon.split(' ')[1]
+            subspecies = taxon.split(' ')[2]
+        except ValueError:
+            print("A subspecies should be in the following format: '<genus> <species> <subspecies>'")
 
-    if rank == 'species':
+        query = f"""
+            SELECT {columns},
+            jaro_winkler_similarity('{genus}', genus) AS genus_similarity,
+            jaro_winkler_similarity('{species}', specificEpithet) AS species_similarity,
+            jaro_winkler_similarity('{subspecies}', specificEpithet) AS species_similarity,
+            (
+                jaro_winkler_similarity('{genus}', genus) + 
+                jaro_winkler_similarity('{species}', specificEpithet) +
+                jaro_winkler_similarity('{subspecies}', specificEpithet)
+            ) / 3 AS similarity 
+            FROM df 
+            WHERE taxonRank = 'species' 
+            AND jaro_winkler_similarity('{genus}', genus) > {threshold}
+            AND jaro_winkler_similarity('{species}', specificEpithet) > {threshold}
+            AND jaro_winkler_similarity('{subspecies}', specificEpithet) > {threshold}
+            ORDER BY similarity 
+        """
+
+    elif rank == 'species':
         try:
             genus = taxon.split(' ')[0]
             species = taxon.split(' ')[1]
         except ValueError:
             print("A species should be in the following format: '<genus> <species>'")
 
-        # Reassign rank to genus if sp. is listed as species
-        if species == 'sp.':
-            rank = 'genus'
-            taxon = genus
-
-    query = (
-        f"""
-            SELECT taxonID, genus, specificEpithet, infraspecificEpithet, vernacularName, canonicalName,
-            (jaro_winkler_similarity('{genus}', genus) + jaro_winkler_similarity('{species}', specificEpithet)) / 2
-            AS similarity 
-            FROM df 
-            WHERE taxonRank = 'species' AND similarity > 0.95
-            ORDER BY similarity 
+        query = f"""
+            SELECT {columns},
+            jaro_winkler_similarity('{genus}', genus) AS genus_similarity,
+            jaro_winkler_similarity('{species}', specificEpithet) AS species_similarity,
+            (
+                jaro_winkler_similarity('{genus}', genus) + 
+                jaro_winkler_similarity('{species}', specificEpithet)
+            ) / 2 AS similarity 
+            FROM df
+            WHERE taxonRank = 'species'
+              AND jaro_winkler_similarity('{genus}', genus) > {threshold}
+              AND jaro_winkler_similarity('{species}', specificEpithet) > {threshold}
+            ORDER BY genus_similarity DESC, species_similarity DESC;
         """
-        if rank == 'species'
-        else f"""
-            SELECT taxonID, canonicalName, vernacularName,
+
+    else:
+        query = f"""
+            SELECT {columns},
             jaro_winkler_similarity('{taxon}', canonicalName) 
             AS similarity,
             FROM df
             WHERE taxonRank = '{rank}'
             ORDER BY similarity 
         """
-    )
 
     match = duckdb.query(query).df()
 
     if match.empty: return None
 
+    if not isinstance(match, pd.DataFrame):
+        print('hi~')
+
     match = match.sort_values('similarity', ascending=False).head(1).to_dict(orient="records")[0]
-    match = match if match['similarity'] > threshold else None
 
-    return match
-
-
-
-
+    # Only return a match if it's similarity score is above threshold
+    if match['similarity'] > threshold:
+        match['vernacularName'] = match['vernacularName'].capitalize()
+        return match
+    else:
+        return None

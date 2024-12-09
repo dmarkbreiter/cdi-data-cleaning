@@ -15,4 +15,14 @@ cols = [col for col in vernaculars.columns if col not in ['taxonID', 'vernacular
 vernaculars.drop(cols, axis=1, inplace=True)
 
 # Merge
-vernaculars = pd.merge(vernaculars, taxa, on='taxonID', how='left')
+vernaculars = pd.merge(taxa, vernaculars, on='taxonID', how='left')
+
+# Sort by weight and drop duplicates based on first (highest weight)
+vernaculars = vernaculars.sort_values(by='weight', axis=0, ascending=False)
+vernaculars.drop_duplicates(subset='canonicalName', keep='first')
+
+# Drop unneeded records
+vernaculars = vernaculars.query("kingdom == 'Animalia' & canonicalName != ''")
+
+vernaculars.fillna('', inplace=True)
+

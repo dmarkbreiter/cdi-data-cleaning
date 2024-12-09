@@ -34,7 +34,7 @@ cols = {
 
 
 taxa = pd.read_csv(
-    '/Users/dmarkbreiter/Downloads/backbone (1)/Taxon.tsv.zip',
+    taxon_path,
     sep='\t',
     on_bad_lines='skip',
     keep_default_na=False,
@@ -44,6 +44,22 @@ taxa = pd.read_csv(
 )
 
 accepted_ids = taxa['acceptedNameUsageID'].to_list()
+accepted_ids = {*[int(id) for id in accepted_ids if id !='']}
+
 taxon_ids = taxa['taxonID'].to_list()
-taxa['taxonID'] = [i if i else t for t, i in zip(taxon_ids, accepted_ids)]
+
+# acceptedNameUsageIDs that do not have taxonIDs
+difference_ids = list({*accepted_ids} - {*taxon_ids})
+difference_ids = [str(id) for id in difference_ids]
+
+# Subset of taxa df if acceptedNameUsageIDs was part of difference
+difference_ids_df = taxa[taxa.acceptedNameUsageID.isin(difference_ids)]
+
+# Redefine taxonID as acceptedNameUsageID
+difference_ids_df['taxonID'] = [int(id) for id in difference_ids_df['acceptedNameUsageID'].to_list()]
+
+# Concat frames
+taxa = pd.concat([taxa, difference_ids_df])
+
+# taxa['taxonID'] = [accepted if accepted else taxon for taxon, accepted in zip(taxon_ids, accepted_ids)]
 

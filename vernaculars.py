@@ -32,7 +32,7 @@ vernacular_names = pd.read_csv(
     dtype=cols
 )
 
-vernacular_names = vernacular_names.query("language == 'en'")
+vernaculars = vernacular_names.query("language == 'en'")
 
 
 def assign_source_weight(source):
@@ -50,9 +50,7 @@ def assign_source_weight(source):
     return weights.get(source, 0)
 
 
-weight = [assign_source_weight(source) for source in vernacular_names['source'].to_list()]
-vernacular_names['weight'] = weight
+weight = [assign_source_weight(source) for source in vernaculars['source'].to_list()]
+vernaculars['weight'] = weight
 
-sorted_vernaculars = vernacular_names.sort_values(by='weight', axis=0, ascending=False)
-
-vernaculars = sorted_vernaculars.drop_duplicates(subset=['taxonID'], keep='first')
+# vernaculars = sorted_vernaculars.drop_duplicates(subset=['canonicalName'], keep='first')
