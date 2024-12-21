@@ -2,7 +2,7 @@
 Reads EMu data from csv into a DataFrame
 
 Meant to import vernaculars, i.e.:
-    >>> from emu import emu
+    >>> from match.emu import emu
 """
 
 

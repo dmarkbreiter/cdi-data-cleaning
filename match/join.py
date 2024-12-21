@@ -2,13 +2,13 @@
 Script to merge GBIF taxononmic backbone Taxon.tsv and VernacularName.tsv, on taxonID.
 
 Meant to import vernaculars, i.e.:
-    >>> from join import vernaculars
+    >>> from match.join import vernaculars
 """
 
 
 import pandas as pd
-from vernaculars import vernaculars
-from taxon import taxa
+from .vernaculars import vernaculars
+from .taxon import taxa
 
 # Clean
 cols = [col for col in vernaculars.columns if col not in ['taxonID', 'vernacularName', 'source', 'weight']]

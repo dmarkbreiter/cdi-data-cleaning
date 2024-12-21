@@ -5,7 +5,7 @@ Transforms dataset for fuzzy matching and merging with Taxon.tsv. Druplicates ar
 and assigned weight based on source.
 
 Meant to import vernaculars, i.e.:
-    >>> from vernaculars import vernaculars
+    >>> from match.vernaculars import vernaculars
 """
 
 
