@@ -56,7 +56,8 @@ difference_ids = [str(id) for id in difference_ids]
 difference_ids_df = taxa[taxa.acceptedNameUsageID.isin(difference_ids)]
 
 # Redefine taxonID as acceptedNameUsageID
-difference_ids_df['taxonID'] = [int(id) for id in difference_ids_df['acceptedNameUsageID'].to_list()]
+accepted_name_ids = [int(id) for id in difference_ids_df['acceptedNameUsageID'].to_list()]
+difference_ids_df = difference_ids_df.assign(taxonID=accepted_name_ids)
 
 # Concat frames
 taxa = pd.concat([taxa, difference_ids_df])

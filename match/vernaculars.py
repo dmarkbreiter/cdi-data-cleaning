@@ -51,6 +51,5 @@ def assign_source_weight(source):
 
 
 weight = [assign_source_weight(source) for source in vernaculars['source'].to_list()]
-vernaculars['weight'] = weight
+vernaculars = vernaculars.assign(weight=weight)
 
-# vernaculars = sorted_vernaculars.drop_duplicates(subset=['canonicalName'], keep='first')
