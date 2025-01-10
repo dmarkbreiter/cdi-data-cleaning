@@ -1,3 +1,6 @@
+import re
+
+
 def clean_life_stage(sex: str) -> str:
     """Cleans sex col from EMu and transforms into dwc:lifeStage"""
     if not sex:

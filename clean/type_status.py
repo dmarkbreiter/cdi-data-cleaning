@@ -1,7 +1,10 @@
+import re
+
+
 def clean_type_status(type_status: str) -> str:
     """Cleans EMu typeStatus column and transforms into dwc:typeStatus"""
 
-    if not val:
+    if not type_status:
         return ""
     
     cleaned_val = type_status.replace("?", "").strip().lower()

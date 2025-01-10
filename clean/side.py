@@ -1,3 +1,6 @@
+import re
+
+
 def clean_side(side: str) -> str:
     """Cleans EMu side column and transforms into dwc:side"""
 

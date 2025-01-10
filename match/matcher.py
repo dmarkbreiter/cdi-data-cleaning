@@ -6,36 +6,38 @@ from .fuzzy_match import fuzzy_match
 
 def create_dict(data):
     # Remove unneeded columns from emu df
-    cols = [col for col in data if col not in ['taxon', 'taxonIrn']]
+    cols = [col for col in data if col not in ['taxon', 'taxonIrn', 'department']]
     emu_dropped = data.drop(cols, axis=1)
 
     # Join based on canonicalName
     joined = pd.merge(emu_dropped, vernaculars, left_on='taxon', right_on='canonicalName')
     joined = joined.drop_duplicates(subset=['taxon'], keep='first')
-
-    return joined.set_index('taxon').to_dict(orient="index")
+    joined['similarity'] = 1.0
+    return joined.set_index('taxonIrn').to_dict(orient="index")
 
 
 class Matcher:
     def __init__(self, data):
         self.dict = create_dict(data)
-        self.taxa =  list(zip(data['taxon'], data['taxonRank'], data['taxonIrn']))
+        self.taxa = list(zip(data['taxon'], data['taxonRank'], data['taxonIrn']))
 
-    def get_vernacular(self, taxon: str, rank: str, irn: int):
-        empty_row = ('', '', '')
-
+    def match(self, taxon: str, rank: str, irn: int, department: str, threshold=0.95) -> None:
+        """Adds taxon to taxonomy dictionary"""
         if not taxon:
-            return empty_row
+            return None
 
-        match = self.dict.get(taxon)
+        match = self.dict.get(irn)
+
         if match:
-            return (match['vernacularName'], match['taxonID'], irn)
+            return None
 
         else:
-            match = fuzzy_match(vernaculars, taxon, rank)
+            match = fuzzy_match(vernaculars, taxon, rank, threshold=threshold)
             if match:
                 self.dict[taxon] = {
                     'taxonIrn': irn,
+                    'taxonRank': rank,
+                    'department': department,
                     'taxonID': match['taxonID'],
                     'kingdom': match['kingdom'],
                     'phylum': match['phylum'],
@@ -49,10 +51,29 @@ class Matcher:
                     'canonicalName': match['canonicalName'],
                     'similarity': match['similarity']
                 }
+            else:
+                self.dict[taxon] = {
+                    'taxonIrn': irn,
+                    'taxonRank': rank,
+                    'department': department,
+                    'taxonID': '',
+                    'kingdom': '',
+                    'phylum': '',
+                    'class': '',
+                    'order': '',
+                    'family': '',
+                    'genus': '',
+                    'specificEpithet': '',
+                    'infraspecificEpithet': '',
+                    'vernacularName': '',
+                    'canonicalName': '',
+                    'similarity': 0
+                }
 
-                return (match['vernacularName'], match['taxonID'], irn)
-            
-            return empty_row
+    def get_match(self, taxon: str):
+        """Returns match from taxonomy dict (does not perform fuzzy match if match does nto exist)"""
+        match = self.dict.get(taxon)
+        return match
         
     def save_dict(self, path):
         df = pd.DataFrame.from_dict(self.dict, orient='index')
