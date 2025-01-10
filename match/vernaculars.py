@@ -33,6 +33,8 @@ vernacular_names = pd.read_csv(
 )
 
 vernaculars = vernacular_names.query("language == 'en'")
+vernaculars.rename(columns={'taxonID': 'taxon_id', 'vernacularName': 'vernacular_name'}, inplace=True)
+
 
 
 def assign_source_weight(source):

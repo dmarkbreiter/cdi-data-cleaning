@@ -43,20 +43,31 @@ taxa = pd.read_csv(
     engine='pyarrow'
 )
 
-accepted_ids = taxa['acceptedNameUsageID'].to_list()
+taxa.rename(columns={
+    'taxonID': 'taxon_id',
+    'acceptedNameUsageID': 'accepted_name_usage_id',
+    'canonicalName': 'canonical_name',
+    'genericName': 'generic_name',
+    'specificEpithet': 'specific_epithet',
+    'infraspecificEpithet': 'infraspecific_epithet',
+    'taxonRank': 'taxon_rank'
+}, inplace=True)
+
+
+accepted_ids = taxa['accepted_name_usage_id'].to_list()
 accepted_ids = {*[int(id) for id in accepted_ids if id !='']}
 
-taxon_ids = taxa['taxonID'].to_list()
+taxon_ids = taxa['taxon_id'].to_list()
 
 # acceptedNameUsageIDs that do not have taxonIDs
 difference_ids = list({*accepted_ids} - {*taxon_ids})
 difference_ids = [str(id) for id in difference_ids]
 
 # Subset of taxa df if acceptedNameUsageIDs was part of difference
-difference_ids_df = taxa[taxa.acceptedNameUsageID.isin(difference_ids)]
+difference_ids_df = taxa[taxa.accepted_name_usage_id.isin(difference_ids)]
 
 # Redefine taxonID as acceptedNameUsageID
-accepted_name_ids = [int(id) for id in difference_ids_df['acceptedNameUsageID'].to_list()]
+accepted_name_ids = [int(id) for id in difference_ids_df['accepted_name_usage_id'].to_list()]
 difference_ids_df = difference_ids_df.assign(taxonID=accepted_name_ids)
 
 # Concat frames
