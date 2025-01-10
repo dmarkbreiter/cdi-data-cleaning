@@ -41,10 +41,10 @@ def fuzzy_match(df, taxon: str, rank='species', threshold=0.95) -> Match | None:
         "order", 
         family, 
         genus, 
-        specificEpithet, 
-        infraspecificEpithet, 
-        vernacularName, 
-        canonicalName
+        specific_epithet, 
+        infraspecific_epithet, 
+        vernacular_name, 
+        canonical_name
     """
 
     if ' sp.' in taxon and rank == 'species':
@@ -62,18 +62,18 @@ def fuzzy_match(df, taxon: str, rank='species', threshold=0.95) -> Match | None:
         query = f"""
             SELECT {columns},
             jaro_winkler_similarity('{genus}', genus) AS genus_similarity,
-            jaro_winkler_similarity('{species}', specificEpithet) AS species_similarity,
-            jaro_winkler_similarity('{subspecies}', specificEpithet) AS species_similarity,
+            jaro_winkler_similarity('{species}', specific_epithet) AS species_similarity,
+            jaro_winkler_similarity('{subspecies}', specific_epithet) AS species_similarity,
             (
                 jaro_winkler_similarity('{genus}', genus) + 
-                jaro_winkler_similarity('{species}', specificEpithet) +
-                jaro_winkler_similarity('{subspecies}', specificEpithet)
+                jaro_winkler_similarity('{species}', specific_epithet) +
+                jaro_winkler_similarity('{subspecies}', specific_epithet)
             ) / 3 AS similarity 
             FROM df 
-            WHERE taxonRank = 'species' 
+            WHERE taxon_rank = 'species' 
             AND jaro_winkler_similarity('{genus}', genus) > {threshold}
-            AND jaro_winkler_similarity('{species}', specificEpithet) > {threshold}
-            AND jaro_winkler_similarity('{subspecies}', specificEpithet) > {threshold}
+            AND jaro_winkler_similarity('{species}', specific_epithet) > {threshold}
+            AND jaro_winkler_similarity('{subspecies}', specific_epithet) > {threshold}
             ORDER BY similarity 
         """
 
@@ -87,25 +87,25 @@ def fuzzy_match(df, taxon: str, rank='species', threshold=0.95) -> Match | None:
         query = f"""
             SELECT {columns},
             jaro_winkler_similarity('{genus}', genus) AS genus_similarity,
-            jaro_winkler_similarity('{species}', specificEpithet) AS species_similarity,
+            jaro_winkler_similarity('{species}', specific_epithet) AS species_similarity,
             (
                 jaro_winkler_similarity('{genus}', genus) + 
-                jaro_winkler_similarity('{species}', specificEpithet)
+                jaro_winkler_similarity('{species}', specific_epithet)
             ) / 2 AS similarity 
             FROM df
-            WHERE taxonRank = 'species'
+            WHERE taxon_rank = 'species'
               AND jaro_winkler_similarity('{genus}', genus) > {threshold}
-              AND jaro_winkler_similarity('{species}', specificEpithet) > {threshold}
+              AND jaro_winkler_similarity('{species}', specific_epithet) > {threshold}
             ORDER BY genus_similarity DESC, species_similarity DESC;
         """
 
     else:
         query = f"""
             SELECT {columns},
-            jaro_winkler_similarity('{taxon}', canonicalName) 
+            jaro_winkler_similarity('{taxon}', canonical_name) 
             AS similarity,
             FROM df
-            WHERE taxonRank = '{rank}'
+            WHERE taxon_rank = '{rank}'
             ORDER BY similarity 
         """
 
@@ -120,7 +120,7 @@ def fuzzy_match(df, taxon: str, rank='species', threshold=0.95) -> Match | None:
 
     # Only return a match if it's similarity score is above threshold
     if match['similarity'] > threshold:
-        match['vernacularName'] = match['vernacularName'].capitalize()
+        match['vernacular_name'] = match['vernacular_name'].capitalize()
         return match
     else:
         return None
