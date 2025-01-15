@@ -1,12 +1,12 @@
-import duckdb
+ import duckdb
 from typing import TypedDict
 import pandas as pd
 
 
 class Match(TypedDict):
-    taxonID: int
-    vernacularName: str
-    canonicalName: str
+    taxon_id: int
+    vernacular_name: str
+    canonical_name: str
     similarity: float
 
 
@@ -34,7 +34,7 @@ def fuzzy_match(df, taxon: str, rank='species', threshold=0.95) -> Match | None:
     rank = rank.lower()
     taxon = taxon.replace("'", '').replace('"', '')
     columns = """
-        taxonID, 
+        taxon_id, 
         kingdom, 
         phylum, 
         class, 

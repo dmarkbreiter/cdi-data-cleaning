@@ -1,7 +1,7 @@
 import pandas as pd
 from time import time
 from tqdm import tqdm
-from match.matcher import Matcher
+from taxonomy.taxonomy import Taxonomy
 from emu import emu
 from clean import *
 
@@ -13,6 +13,7 @@ emu['life_stage'] = emu['sex'].apply(clean_life_stage)
 emu['element'] = emu['element'].apply(clean_element)
 emu['side'] = emu['side'].apply(clean_side)
 emu['type_status'] = emu['type_status'].apply(clean_type_status)
+emu['department'] = emu['department'].apply(lambda x: x.lower())
 
 # Prepare taxa list to feed into Matcher match method
 taxa_df = emu.drop_duplicates(subset='taxon_irn')
@@ -20,20 +21,21 @@ taxa = list(zip(taxa_df['taxon'], taxa_df['taxon_rank'], taxa_df['taxon_irn'], t
 
 # Initialize matcher
 start_time = time()
-matcher = Matcher(emu)
+taxonomy = Taxonomy(emu)
 
-# Perform matches
 [
-    matcher.match(taxon[0], taxon[1], taxon[2], taxon[3])
+    taxonomy.match(taxon[0], taxon[1], taxon[2], taxon[3])
     for taxon in tqdm(taxa, desc="Matching EMu taxa to vernacular names")
 ]
 
+
 # Get results
-results = matcher.to_df()
+results = taxonomy.to_df()
 
 print(time() - start_time)
 
+emu = emu.drop(columns=['taxon', 'taxon_rank'])
 emu.to_csv('data/emu-cleaned.csv')
 
 # Save dictionary
-matcher.save_dict('data/matched-dict.csv')
+taxonomy.save_records('data/taxonomy.csv')
